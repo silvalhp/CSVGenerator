@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/silvalhp/CSVGenerator/issues"
   },
-  "homepage": "https://github.com/silvalhp/CSVGenerator#readme"
+  "homepage": "https://github.com/silvalhp/CSVGenerator#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "influx": "^5.0.7"
+  }
 }
