@@ -1,0 +1,19 @@
+{
+  "name": "csvgenerator",
+  "version": "1.0.0",
+  "description": "Tool that retrieves a set of data from the database, map it to the telemetry report format and save to .csv files.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silvalhp/CSVGenerator.git"
+  },
+  "author": "Luiz Henrique Pereira da Silva",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/silvalhp/CSVGenerator/issues"
+  },
+  "homepage": "https://github.com/silvalhp/CSVGenerator#readme"
+}
