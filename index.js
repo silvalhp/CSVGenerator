@@ -14,7 +14,6 @@ class CSVGenerator {
 		this.outputFile = outputFile;
 		this.resultFileName;
 		this.resultsDir;
-		// metric list readed from the Collector config file
 		this.metrics = config.redfish.metrics;
 	}
 
@@ -24,7 +23,7 @@ class CSVGenerator {
 
 
 
-	exportInfluxDatabase(database) {
+	exportInfluxDatabase(database, output) {
 		var databaseSchema = database.options.schema;
 		var epoch = config.epoch;
 		var finalRow = [];
@@ -34,10 +33,6 @@ class CSVGenerator {
 			var name = path.parse(fileName).name;
 			var resultsDir = `${path.parse(fileName).dir}${path.sep}`;
 			var resultFileName = `${name}_${serverID}_${report}${path.parse(fileName).ext}`;
-			//console.log(resultsDir);
-			//console.log(resultFileName);
-			//console.log("=============================");
-			//console.log(result);
 
 			fs.mkdir(resultsDir, {recursive: true}, (err) => {
 				if (err) 
@@ -45,15 +40,6 @@ class CSVGenerator {
 
 				var ws = fs.createWriteStream(`${resultsDir}${resultFileName}`);
 				fastcsv.write(result, { headers: false}).pipe(ws);
-				// TRATAR A AQUI A CRIAÇÃO DOS ARQUIVOS
-				//fs.open(`${resultsDir}${resultFileName}`, "a+", (err, file) => {
-				//	if (err)
-				//		throw err;
-
-					//console.log(`${file}`);
-				//	const ws = fs.createWriteStream(`${resultsDir}${resultFileName}`);
-				//	fastcsv.write(result, { headers: false, ignoreEmpty: true }).pipe(ws);
-				//});
 			});
 		}
 
@@ -68,7 +54,6 @@ class CSVGenerator {
 					rows.forEach(row => {
 
 						//console.log(reportType);
-						console.log("OIIIII!!!!!!!!");
 
 						if (measurements[row.Server] == undefined) {
 							measurements[row.Server] = [];
@@ -99,137 +84,60 @@ class CSVGenerator {
 					});
 				}).then(() => {
 					var currentMetric = schema.measurement;
+					var rowStruct = require("./config/csvReportStruct").csvReportStruct[`${currentMetric}`];
+					var extraInfo = require("./config/csvReportStruct").csvReportStruct.extraInfo;
 					var server = "10.26.101.237";
 					var copyMeasurements = measurements;
+					var interval = config.interval;
 					var result = [];
-					//var interval = config.interval;
-					//var sensorInterval = interval;
-					//var cont = 0;
 
-					console.log(currentMetric);
+					console.log(rowStruct);
 					for (var server in copyMeasurements) {
-						console.log(`==> ${server}`);
+						var currentInterval = 0;
+						//console.log(`==> ${server}`);
 						//console.log(measurements[server]);
 
 						for (var timestamp in copyMeasurements[server]) {
 							var rowContent = [];
-							console.log(`|	==> ${timestamp}`);
+							rowContent.push(currentInterval += interval);
+							rowContent.push("Metric");
+							rowContent.push(currentMetric);
+							//console.log(`|	==> ${timestamp}`);
 							//sensorSet.push(sensorInterval);
 
 							for (var index in copyMeasurements[server][timestamp]) {
-								console.log(`|	|	==> ${copyMeasurements[server][timestamp][index]}:`);
+								//console.log(`|	|	==> ${copyMeasurements[server][timestamp][index]}:`);
 								//console.log(copyMeasurements[server][timestamp][index]);
 
 									for (var key in copyMeasurements[server][timestamp][index]) {
-										//console.log(key);
-										rowContent.push(key);
-										rowContent.push(copyMeasurements[server][timestamp][index][key]);
-								//		sensorSet.push(metric);
-								//		sensorSet.push(copyMeasurements[server][timestamp][reportType][i][metric]);
-										//console.log(measurements[server][timestamp][reportType][i][metric]);
+										if (rowStruct.hasOwnProperty(key)) {
+											//console.log(key);
+											rowContent.push(key);
+											rowContent.push(copyMeasurements[server][timestamp][index][key]);
+											rowContent.push(timestamp);
+											for (var extraKey in extraInfo) {
+												rowContent.push(copyMeasurements[server][timestamp][index][extraKey]);
+											} 
+										}
 									}
 									
-								//	console.log(sensorSet);
-								//	temp.push(sensorSet);
-								//}
-								//console.log(temp);
-								//createOutputFile("CSVResult\\data.csv", `${server.replace(":". ".")}`, `${reportType}`, temp);
 								//console.log(`|	|	==> END of ${reportType}:`);
 							}
 							
 							result.push(rowContent);
 							rowContent = [];
-							//if (Object.keys(temp).length < epoch){
-							//temp.push(sensorSet);
-							//	continue;
-							//}
-							//count = 0;
-							//sensorSet = [];
-							//console.log(reportType);
-							//console.log(temp);
-							//createOutputFile("CSVResult\\data.csv", `${server}`, `${metric}`, rowContent);
-							//temp = [];
-							//resultRow = [];
 						}
 					}
 
-					console.log(server);
-					console.log(currentMetric);
-					createOutputFile("CSVResult\\data.csv", server.replace(":", "."), currentMetric, result);
+					result.push(["0.0, END"]);
 
+					createOutputFile(output, server.replace(":", "."), currentMetric, result);
 
-					//console.log(finalRow);
-
-					//createOutputFile("CSVResult\\data.csv", `1454545`, `Thermal`, finalRow);
-					//createOutputFile("CSVResult/data.csv", "15425451", "Thermal", finalRow);
-					//console.log(finalRow);
-
-					//createOutputFile("10.26.101.237:443", schema.measurement);
-					//for (var serverIndex = 0; Object.keys(measurements).length; serverIndex++) {
-					//console.log(measurements);
-					//}
 					measurements = [];
 					retrieveDatasFromInfluxDB(schemas, measurements);
 				});
 			} else {
-				//var resultRow = [];
-				//var interval = config.interval;
-				//var sensorInterval = interval;
-				//var cont = 0;
-
-				//for (var server in measurements) {
-					//console.log(`==> ${server}`);
-					//console.log(measurements[server]);
-
-					//for (var timestamp in measurements[server]) {
-						//console.log(`|	==> ${timestamp}`);
-						//sensorSet.push(sensorInterval);
-
-						//for (var reportType in measurements[server][timestamp]) {
-						//	var temp = [];
-							//console.log(`|	|	==> ${reportType}:`);
-							//console.log(reportType);
-
-						//	for (var i = 0; i < measurements[server][timestamp][reportType].length; i++) {
-						//		var sensorSet = [];
-								//console.log(`|	|	|	==> ${measurements[server][timestamp][reportType][i]}`);
-						//		for (var metric in measurements[server][timestamp][reportType][i]) {
-									//console.log(metric);
-						//			sensorSet.push(metric);
-						//			sensorSet.push(measurements[server][timestamp][reportType][i][metric]);
-									//console.log(measurements[server][timestamp][reportType][i][metric]);
-						//		}
-								//temp.push(sensorSet);
-						//	}
-							//console.log(temp);
-							//createOutputFile("CSVResult\\data.csv", `${server.replace(":". ".")}`, `${reportType}`, temp);
-							//console.log(`|	|	==> END of ${reportType}:`);
-						//}
-						
-						//if (Object.keys(temp).length < epoch){
-						//temp.push(sensorSet);
-						//	continue;
-						//}
-						//count = 0;
-						//sensorSet = [];
-						//console.log(reportType);
-						//console.log(temp);
-						//createOutputFile("CSVResult\\data.csv", `${server.replace(":", ".")}`, `${currentReport}`, temp);
-						//temp = [];
-						//resultRow = [];
-				//	}
-				//}
-
-				//console.log(finalRow);
-
-				//createOutputFile("CSVResult\\data.csv", `1454545`, `Thermal`, finalRow);
-				//createOutputFile("CSVResult/data.csv", "15425451", "Thermal", finalRow);
-				//console.log(finalRow);
-
-				//createOutputFile("10.26.101.237:443", schema.measurement);
-				//for (var serverIndex = 0; Object.keys(measurements).length; serverIndex++) {
-				//console.log(measurements);
-				//}
+				
 			}
 		}
 
@@ -245,6 +153,3 @@ class CSVGenerator {
 }
 
 module.exports = CSVGenerator;
-//const csvGen = new CSVGenerator(path.parse("CSVFiles/data.csv"));
-//csvGen.createOutputFile();
-//csvGen.fileValues;
